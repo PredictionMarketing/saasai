@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
-import { TrendingUp, Target, Zap, DollarSign, Users, BarChart3 } from 'lucide-react'
+import { TrendingUp, Target, Zap, DollarSign, Users, BarChart3, CheckCircle, XCircle } from 'lucide-react'
+import { generateMarketResearch } from '../services/api'
+import type { MarketResearchRequest } from '../services/api'
 
 export default function MarketResearch() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<MarketResearchRequest>({
     website: '',
     industry: '',
     userCount: '',
@@ -16,55 +18,23 @@ export default function MarketResearch() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [researchResult, setResearchResult] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsAnalyzing(true)
+    setError(null)
     
-    // Simulate market research
-    setTimeout(() => {
-      setResearchResult({
-        industryInsights: {
-          marketSize: "$45.2B",
-          growthRate: "23.4%",
-          aiAdoption: "67%"
-        },
-        opportunities: [
-          {
-            title: "Predictive Customer Analytics",
-            potential: "$2.3M ARR increase",
-            description: "AI-powered customer behavior prediction can reduce churn by 25% in your industry",
-            priority: "High",
-            timeToValue: "3-4 months"
-          },
-          {
-            title: "Intelligent Content Personalization", 
-            potential: "$1.8M ARR increase",
-            description: "Dynamic content optimization increases engagement by 40% and conversion by 18%",
-            priority: "High",
-            timeToValue: "2-3 months"
-          },
-          {
-            title: "Automated Customer Support",
-            potential: "$800K cost savings",
-            description: "AI chatbot can handle 70% of support tickets, reducing support costs by 45%",
-            priority: "Medium",
-            timeToValue: "1-2 months"
-          }
-        ],
-        competitiveGaps: [
-          "85% of your competitors use AI for customer segmentation",
-          "72% have implemented predictive analytics",
-          "58% offer AI-powered recommendations"
-        ],
-        recommendations: {
-          phase1: "Start with Predictive Analytics widget - highest ROI potential",
-          phase2: "Add Content Personalization for engagement boost",
-          phase3: "Implement Support Automation for cost optimization"
-        }
-      })
+    try {
+      console.log('📊 Starting real market research...')
+      const research = await generateMarketResearch(formData)
+      setResearchResult(research)
+    } catch (err) {
+      console.error('Market research failed:', err)
+      setError(err instanceof Error ? err.message : 'Market research failed')
+    } finally {
       setIsAnalyzing(false)
-    }, 4000)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -78,7 +48,7 @@ export default function MarketResearch() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          AI Market Research
+          Real AI Market Research
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Get comprehensive market analysis and AI opportunity identification for your industry. 
@@ -86,13 +56,22 @@ export default function MarketResearch() {
         </p>
       </div>
 
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <XCircle className="h-5 w-5 text-red-600 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      )}
+
       {!researchResult ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Website *
+                  Your Website
                 </label>
                 <input
                   type="url"
@@ -101,7 +80,6 @@ export default function MarketResearch() {
                   onChange={handleInputChange}
                   placeholder="https://yoursite.com"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  required
                 />
               </div>
 
@@ -273,7 +251,7 @@ export default function MarketResearch() {
               {isAnalyzing ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Analyzing Market...
+                  Analyzing Market... (This may take 20-30 seconds)
                 </>
               ) : (
                 <>
@@ -286,6 +264,14 @@ export default function MarketResearch() {
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Success Message */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+              <p className="text-green-800">Market research completed successfully!</p>
+            </div>
+          </div>
+
           {/* Market Overview */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6">Market Overview</h2>
@@ -401,6 +387,29 @@ export default function MarketResearch() {
                 Schedule Strategy Call
               </button>
             </div>
+          </div>
+
+          {/* Reset Button */}
+          <div className="text-center">
+            <button
+              onClick={() => {
+                setResearchResult(null)
+                setFormData({
+                  website: '',
+                  industry: '',
+                  userCount: '',
+                  revenue: '',
+                  mainGoal: '',
+                  currentChallenges: '',
+                  aiExperience: '',
+                  timeline: '',
+                  budget: ''
+                })
+              }}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+            >
+              Generate New Research
+            </button>
           </div>
         </div>
       )}

@@ -1,8 +1,10 @@
 import React, { useState } from 'react'
-import { Search, Globe, Users, TrendingUp, Zap, AlertCircle } from 'lucide-react'
+import { Search, Globe, Users, TrendingUp, Zap, AlertCircle, CheckCircle, XCircle } from 'lucide-react'
+import { analyzeCompetitor } from '../services/api'
+import type { CompetitorAnalysisRequest } from '../services/api'
 
 export default function CompetitorAnalysis() {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CompetitorAnalysisRequest>({
     competitorUrl: '',
     yourWebsite: '',
     industry: '',
@@ -15,40 +17,23 @@ export default function CompetitorAnalysis() {
 
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [analysisResult, setAnalysisResult] = useState<any>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsAnalyzing(true)
+    setError(null)
     
-    // Simulate analysis
-    setTimeout(() => {
-      setAnalysisResult({
-        competitorName: "Competitor Analysis",
-        aiFeatures: [
-          {
-            name: "Smart Recommendations",
-            impact: "High",
-            description: "AI-powered product recommendations increase conversion by 23%",
-            complexity: "Medium"
-          },
-          {
-            name: "Predictive Analytics",
-            impact: "High", 
-            description: "Churn prediction helps retain 15% more customers",
-            complexity: "High"
-          },
-          {
-            name: "Automated Support",
-            impact: "Medium",
-            description: "AI chatbot handles 60% of support tickets",
-            complexity: "Low"
-          }
-        ],
-        marketGap: "Your competitor is using AI to reduce customer acquisition cost by 30% while you're still using manual processes.",
-        recommendation: "Start with Smart Recommendations widget - highest ROI with medium complexity."
-      })
+    try {
+      console.log('🔍 Starting real competitor analysis...')
+      const analysis = await analyzeCompetitor(formData)
+      setAnalysisResult(analysis)
+    } catch (err) {
+      console.error('Analysis failed:', err)
+      setError(err instanceof Error ? err.message : 'Analysis failed')
+    } finally {
       setIsAnalyzing(false)
-    }, 3000)
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -62,13 +47,22 @@ export default function CompetitorAnalysis() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">
-          Competitor AI Analysis
+          Real Competitor AI Analysis
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Submit a competitor's URL and we'll analyze their AI features, identify gaps in your offering, 
           and recommend custom widgets to help you compete.
         </p>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <XCircle className="h-5 w-5 text-red-600 mr-2" />
+            <p className="text-red-800">{error}</p>
+          </div>
+        </div>
+      )}
 
       {!analysisResult ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
@@ -94,7 +88,7 @@ export default function CompetitorAnalysis() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Your Website *
+                  Your Website
                 </label>
                 <div className="relative">
                   <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
@@ -105,7 +99,6 @@ export default function CompetitorAnalysis() {
                     onChange={handleInputChange}
                     placeholder="https://yoursite.com"
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    required
                   />
                 </div>
               </div>
@@ -231,7 +224,7 @@ export default function CompetitorAnalysis() {
               {isAnalyzing ? (
                 <>
                   <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Analyzing Competitor...
+                  Analyzing Competitor... (This may take 30-60 seconds)
                 </>
               ) : (
                 <>
@@ -244,90 +237,162 @@ export default function CompetitorAnalysis() {
         </div>
       ) : (
         <div className="space-y-8">
-          {/* Analysis Results */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Analysis Results</h2>
-            
-            {/* Market Gap Alert */}
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
-              <div className="flex items-start">
-                <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 mr-3" />
-                <div>
-                  <h3 className="font-semibold text-amber-800 mb-1">Market Gap Identified</h3>
-                  <p className="text-amber-700">{analysisResult.marketGap}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* AI Features Found */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Features Identified</h3>
-              <div className="grid gap-4">
-                {analysisResult.aiFeatures.map((feature: any, index: number) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-semibold text-gray-900">{feature.name}</h4>
-                      <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          feature.impact === 'High' ? 'bg-red-100 text-red-800' :
-                          feature.impact === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {feature.impact} Impact
-                        </span>
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          feature.complexity === 'High' ? 'bg-red-100 text-red-800' :
-                          feature.complexity === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-green-100 text-green-800'
-                        }`}>
-                          {feature.complexity} Complexity
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-gray-600">{feature.description}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recommendation */}
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-6">
-              <div className="flex items-start">
-                <TrendingUp className="h-6 w-6 text-primary-600 mt-1 mr-3" />
-                <div>
-                  <h3 className="font-semibold text-primary-900 mb-2">Our Recommendation</h3>
-                  <p className="text-primary-800 mb-4">{analysisResult.recommendation}</p>
-                  <button className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
-                    Get Custom Quote
-                  </button>
-                </div>
-              </div>
+          {/* Success Message */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="flex items-center">
+              <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+              <p className="text-green-800">Analysis completed successfully!</p>
             </div>
           </div>
 
-          {/* Next Steps */}
+          {/* Analysis Results */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <h3 className="text-xl font-semibold text-gray-900 mb-4">Next Steps</h3>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 font-semibold">1</span>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+              Analysis Results for {analysisResult.competitorName}
+            </h2>
+            
+            {/* Market Gap Alert */}
+            {analysisResult.marketGap && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                <div className="flex items-start">
+                  <AlertCircle className="h-5 w-5 text-amber-600 mt-0.5 mr-3" />
+                  <div>
+                    <h3 className="font-semibold text-amber-800 mb-1">Market Gap Identified</h3>
+                    <p className="text-amber-700">{analysisResult.marketGap}</p>
+                  </div>
                 </div>
-                <p className="text-gray-700">We'll create a detailed project scope and timeline</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 font-semibold">2</span>
+            )}
+
+            {/* AI Features Found */}
+            {analysisResult.aiFeatures && analysisResult.aiFeatures.length > 0 && (
+              <div className="mb-8">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">AI Features Identified</h3>
+                <div className="grid gap-4">
+                  {analysisResult.aiFeatures.map((feature: any, index: number) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900">{feature.name}</h4>
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            feature.impact === 'High' ? 'bg-red-100 text-red-800' :
+                            feature.impact === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {feature.impact} Impact
+                          </span>
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            feature.complexity === 'High' ? 'bg-red-100 text-red-800' :
+                            feature.complexity === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {feature.complexity} Complexity
+                          </span>
+                          {feature.confidence && (
+                            <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                              {feature.confidence}% Confidence
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-gray-600 mb-2">{feature.description}</p>
+                      {feature.estimatedROI && (
+                        <p className="text-sm text-green-600 font-medium">Expected Impact: {feature.estimatedROI}</p>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <p className="text-gray-700">Build your custom AI widget with your branding</p>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-600 font-semibold">3</span>
+            )}
+
+            {/* Recommendation */}
+            {analysisResult.recommendation && (
+              <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 mb-6">
+                <div className="flex items-start">
+                  <TrendingUp className="h-6 w-6 text-primary-600 mt-1 mr-3" />
+                  <div>
+                    <h3 className="font-semibold text-primary-900 mb-2">Our Recommendation</h3>
+                    <p className="text-primary-800 mb-4">{analysisResult.recommendation}</p>
+                    <button className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition-colors">
+                      Get Custom Quote
+                    </button>
+                  </div>
                 </div>
-                <p className="text-gray-700">Deploy with a single line of code integration</p>
               </div>
-            </div>
+            )}
+
+            {/* Implementation Plan */}
+            {analysisResult.implementationPlan && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Implementation Roadmap</h3>
+                <div className="space-y-3">
+                  {Object.entries(analysisResult.implementationPlan).map(([phase, description], index) => (
+                    <div key={phase} className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
+                        <span className="text-primary-600 font-semibold">{index + 1}</span>
+                      </div>
+                      <div>
+                        <h4 className="font-medium text-gray-900 capitalize">{phase.replace(/([A-Z])/g, ' $1')}</h4>
+                        <p className="text-gray-600">{description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Estimated Impact */}
+            {analysisResult.estimatedImpact && (
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Estimated Business Impact</h3>
+                  <div className="space-y-3">
+                    {Object.entries(analysisResult.estimatedImpact).map(([metric, value]) => (
+                      <div key={metric} className="flex justify-between">
+                        <span className="text-gray-600 capitalize">{metric.replace(/([A-Z])/g, ' $1')}</span>
+                        <span className="font-medium text-gray-900">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {analysisResult.competitiveAdvantages && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Competitive Advantages</h3>
+                    <ul className="space-y-2">
+                      {analysisResult.competitiveAdvantages.map((advantage: string, index: number) => (
+                        <li key={index} className="flex items-start">
+                          <Zap className="h-4 w-4 text-primary-600 mt-1 mr-2 flex-shrink-0" />
+                          <span className="text-gray-600">{advantage}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Reset Button */}
+          <div className="text-center">
+            <button
+              onClick={() => {
+                setAnalysisResult(null)
+                setFormData({
+                  competitorUrl: '',
+                  yourWebsite: '',
+                  industry: '',
+                  currentUsers: '',
+                  mainChallenge: '',
+                  specificFeature: '',
+                  timeline: '',
+                  budget: ''
+                })
+              }}
+              className="bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors"
+            >
+              Analyze Another Competitor
+            </button>
           </div>
         </div>
       )}
